@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Modern Basketbol Oyunu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #111 url('https://images.unsplash.com/photo-1602406389422-7b9f3bec3b7e?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
+            font-family: sans-serif;
+            color: #fff;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #scoreboard,
+        #highscore {
+            position: absolute;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 1rem;
+            z-index: 2;
+        }
+
+        #scoreboard {
+            top: 10px
+        }
+
+        #highscore {
+            top: 50px
+        }
+
+        #comboText,
+        #comboTimer {
+            position: absolute;
+            color: gold;
+            text-shadow: 0 0 8px black;
+            opacity: 0;
+            transition: opacity .3s;
+            z-index: 2;
+        }
+
+        #comboText {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+        }
+
+        #comboTimer {
+            top: 12%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 4rem;
+        }
+
+        #ui {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 3;
+            display: flex;
+            gap: 8px;
+        }
+
+        #ui button {
+            background: rgba(0, 0, 0, 0.6);
+            border: none;
+            color: #fff;
+            font-size: 1.2rem;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #infoBox {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 360px;
+            color: #fff;
+            z-index: 4;
+            display: none;
+        }
+
+        #infoBox button {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: transparent;
+            font-size: 1.2rem;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="game"></canvas>
+    <div id="scoreboard">Skor: 0</div>
+    <div id="highscore">En İyi: 0</div>
+    <div id="comboText">x2</div>
+    <div id="comboTimer">3</div>
+    <div id="ui">
+        <button style="font-size: 30px;" id="resetBtn">⟳</button>
+        <button style="font-size: 30px;" id="fsBtn">⛶</button>
+        <button style="font-size: 30px;" id="infoBtn">ℹ</button>
+    </div>
+    <div id="infoBox">
+        <button id="closeInfo">✖</button>
+        <p>Keşke ben de öğrensem oyun falan yapardım, demiştin ben de senin yerine yapabildiğim oyunu
+            yaptım (tasarımı kötü onun için kusura bakma)<br><strong>EĞLENCELER</strong></p>
+    </div>
+
+    <script>
+        window.onload = () => {
+            const c = document.getElementById('game'), ctx = c.getContext('2d'),
+                sb = document.getElementById('scoreboard'),
+                hs = document.getElementById('highscore'),
+                ct = document.getElementById('comboText'),
+                ctm = document.getElementById('comboTimer'),
+                resetBtn = document.getElementById('resetBtn'),
+                fsBtn = document.getElementById('fsBtn'),
+                infoBtn = document.getElementById('infoBtn'),
+                infoBox = document.getElementById('infoBox'),
+                closeInfo = document.getElementById('closeInfo');
+
+            let W, H,
+                score = 0, highscore = 0, combo = 0,
+                gameStarted = false,
+                comboTimeout, comboInterval, comboRemain = 3;
+
+            const gravity = 0.6, friction = 0.99, restitution = 0.88, power = 0.07;
+
+            const hoop = { x: 0, y: 0, w: 0, th: 10, rimOut: 45, rimIn: 38, netLen: 60, offset: 20 };
+            const ball = { x: 0, y: 0, prevY: 0, r: 20, vx: 0, vy: 0, drag: false };
+            const startPos = { x: 0.2, y: 0.8 };
+            let sx, sy, ax, ay, shot = false;
+
+            function randomHoop() {
+                hoop.w = ball.r * 3;
+                hoop.x = Math.random() * (W - hoop.w - hoop.offset * 2) + hoop.offset;
+                hoop.y = Math.random() * H * 0.4 + H * 0.1;
+            }
+
+            function resize() {
+                W = c.width = window.innerWidth;
+                H = c.height = window.innerHeight;
+                randomHoop(); resetBall();
+            }
+
+            function resetBall() {
+                ball.x = W * startPos.x;
+                ball.y = H * startPos.y;
+                ball.vx = ball.vy = 0;
+                ball.drag = false;
+                shot = false;
+            }
+
+            // Modernized drawHoop with glow and sleek backboard
+            function drawHoop() {
+                ctx.save();
+                // Backboard with slight transparency and glow
+                const boardW = hoop.w + 20, boardH = 10;
+                ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                ctx.shadowColor = 'rgba(255,255,255,0.5)';
+                ctx.shadowBlur = 8;
+                ctx.fillRect(hoop.x - 10, hoop.y - 10, boardW, boardH);
+                ctx.shadowBlur = 0;
+
+                // Rim gradient
+                const rimCenterX = hoop.x + hoop.w / 2;
+                const rimGradient = ctx.createLinearGradient(
+                    rimCenterX - hoop.rimOut, hoop.y,
+                    rimCenterX + hoop.rimOut, hoop.y
+                );
+                rimGradient.addColorStop(0, '#ff4d4d');
+                rimGradient.addColorStop(0.5, '#ff1a1a');
+                rimGradient.addColorStop(1, '#cc0000');
+                ctx.strokeStyle = rimGradient;
+                ctx.lineWidth = hoop.th;
+                ctx.beginPath();
+                ctx.arc(rimCenterX, hoop.y, hoop.rimOut, 0, Math.PI, true);
+                ctx.stroke();
+
+                // Inner rim shadow for depth
+                ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                ctx.lineWidth = hoop.th - 4;
+                ctx.beginPath();
+                ctx.arc(rimCenterX, hoop.y, hoop.rimIn, 0, Math.PI, true);
+                ctx.stroke();
+
+                // Net with soft white lines
+                ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+                ctx.lineWidth = 1;
+                const strands = 8, step = Math.PI / (strands - 1);
+                for (let i = 0; i < strands; i++) {
+                    const ang = Math.PI - i * step;
+                    const x0 = rimCenterX + hoop.rimIn * Math.cos(ang);
+                    const y0 = hoop.y + hoop.rimIn * Math.sin(ang);
+                    ctx.beginPath();
+                    ctx.moveTo(x0, y0);
+                    ctx.lineTo(x0, y0 + hoop.netLen);
+                    ctx.stroke();
+                }
+                for (let i = 0; i < strands - 1; i++) {
+                    const a1 = Math.PI - i * step, a2 = Math.PI - (i + 1) * step;
+                    const x1 = rimCenterX + hoop.rimIn * Math.cos(a1), y1 = hoop.y + hoop.rimIn * Math.sin(a1) + hoop.netLen;
+                    const x2 = rimCenterX + hoop.rimIn * Math.cos(a2), y2 = hoop.y + hoop.rimIn * Math.sin(a2) + hoop.netLen;
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+
+            function drawBall() {
+                const g = ctx.createRadialGradient(
+                    ball.x - ball.r * 0.3, ball.y - ball.r * 0.3, ball.r * 0.1,
+                    ball.x, ball.y, ball.r
+                );
+                g.addColorStop(0, '#f5932b'); g.addColorStop(1, '#c75b12');
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ball.r, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.strokeStyle = '#5a2c0f'; ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(ball.x - ball.r * 0.7, ball.y);
+                ctx.lineTo(ball.x + ball.r * 0.7, ball.y);
+                ctx.stroke();
+            }
+
+            function drawLine() {
+                if (ball.drag) {
+                    ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.moveTo(ball.x, ball.y); ctx
+                        .lineTo(ax, ay); ctx.stroke();
+                }
+            }
+
+            function updateBall() {
+                ball.prevY = ball.y;
+                if (!ball.drag) {
+                    ball.vy += gravity;
+                    ball.vx *= friction; ball.vy *= friction;
+                    ball.x += ball.vx; ball.y += ball.vy;
+                }
+                if (ball.y + ball.r > H) { ball.y = H - ball.r; ball.vy *= -restitution; }
+                if (ball.x - ball.r < 0) { ball.x = ball.r; ball.vx *= -restitution; }
+                if (ball.x + ball.r > W) { ball.x = W - ball.r; ball.vx *= -restitution; }
+            }
+
+            function checkScore() {
+                const prevBottom = ball.prevY + ball.r;
+                const newBottom = ball.y + ball.r;
+                if (!shot &&
+                    prevBottom < hoop.y &&
+                    newBottom >= hoop.y &&
+                    ball.x > hoop.x + hoop.th &&
+                    ball.x < hoop.x + hoop.w - hoop.th
+                ) {
+                    score++; combo++; shot = true;
+                    updateScore(); showCombo();
+                    randomHoop(); resetBall();
+                }
+            }
+
+            function updateScore() {
+                sb.textContent = 'Skor: ' + score;
+                if (score > highscore) {
+                    highscore = score;
+                    hs.textContent = 'En İyi: ' + highscore;
+                    localStorage.setItem('highscore', highscore);
+                }
+            }
+
+            function showCombo() {
+                if (combo > 1) {
+                    ct.textContent = 'x' + combo; ct.style.opacity = 1;
+                    setTimeout(() => ct.style.opacity = 0, 1000);
+                    startCombo();
+                }
+            }
+            function startCombo() {
+                clearInterval(comboInterval); clearTimeout(comboTimeout);
+                comboRemain = 3; ctm.textContent = comboRemain; ctm.style.opacity = 1;
+                comboInterval = setInterval(() => {
+                    comboRemain--; if (comboRemain > 0) ctm.textContent = comboRemain;
+                }, 1000);
+                comboTimeout = setTimeout(() => {
+                    combo = 0; ctm.style.opacity = 0;
+                }, 3000);
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, W, H);
+                drawHoop(); drawLine(); drawBall();
+            }
+            function loop() {
+                if (!gameStarted) return;
+                updateBall(); checkScore(); draw();
+                requestAnimationFrame(loop);
+            }
+
+            function ptrDown(e) {
+                const r = c.getBoundingClientRect();
+                const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+                const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+                if (Math.hypot(x - ball.x, y - ball.y) < ball.r) {
+                    ball.drag = true; sx = x; sy = y;
+                }
+            }
+            function ptrMove(e) {
+                if (!ball.drag) return;
+                const r = c.getBoundingClientRect();
+                const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+                const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+                ball.x = x; ball.y = y; ax = x + (x - sx); ay = y + (y - sy);
+            }
+            function ptrUp() {
+                if (!ball.drag) return;
+                ball.vx = (ball.x - sx) * power;
+                ball.vy = (ball.y - sy) * power;
+                ball.drag = false;
+            }
+
+            ['mousedown', 'touchstart'].forEach(evt => c.addEventListener(evt, ptrDown));
+            ['mousemove', 'touchmove'].forEach(evt => c.addEventListener(evt, ptrMove));
+            ['mouseup', 'touchend'].forEach(evt => c.addEventListener(evt, ptrUp));
+
+            resetBtn.onclick = () => {
+                score = 0; combo = 0; highscore = 0;
+                localStorage.setItem('highscore', 0);
+                updateScore(); hs.textContent = 'En İyi: 0';
+                randomHoop(); resetBall();
+            };
+            fsBtn.onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+            infoBtn.onclick = () => infoBox.style.display = 'block';
+            closeInfo.onclick = () => infoBox.style.display = 'none';
+
+            function start() {
+                highscore = Number(localStorage.getItem('highscore')) || 0;
+                hs.textContent = 'En İyi: ' + highscore;
+                score = 0; combo = 0; updateScore();
+                gameStarted = true; loop();
+            }
+
+            window.addEventListener('resize', resize);
+            resize(); start();
+        };
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+
+    <title>Kalpten Gelen Mesaj</title>
+
+    <!-- Google Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Pacifico&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+
+    <style>
+        /* ========= Temel & Reset ========= */
+        :root {
+            --clr-bg-light: #ffd1dc;
+            --clr-bg-dark: #cdb4db;
+            --clr-primary: #ffb3c1;
+            --clr-secondary: #c4e1c1;
+            --clr-text: #4a2c44;
+            --clr-overlay: rgba(0, 0, 0, 0.5);
+            --clr-btn-bg: var(--clr-primary);
+            --clr-btn-text: var(--clr-text);
+            --clr-btn-hover: var(--clr-secondary);
+            --ff-base: 'Montserrat', sans-serif;
+            --ff-script: 'Pacifico', cursive;
+            --transition: 0.25s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 90vh;
+            font-family: var(--ff-base);
+            background: linear-gradient(135deg, var(--clr-bg-light), var(--clr-bg-dark));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--clr-text);
+            overflow: hidden;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+            overscroll-behavior: none;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* ======== Üst Kontroller ======== */
+        #controls {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            /* kenarları sıfırla */
+            padding: 0.5rem;
+            /* iç boşluk ver */
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 0.4rem;
+            background: var(--clr-bg-light);
+            /* isterseniz yarı‐saydam bir zemin ekleyin */
+            z-index: 1000;
+        }
+
+        .ctrl-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: var(--clr-btn-bg);
+            color: var(--clr-btn-text);
+            border: none;
+            padding: 0.4rem;
+            border-radius: 2rem;
+            font-size: clamp(0.7rem, 2.2vw, 1rem);
+            cursor: pointer;
+            transition: background var(--transition), transform var(--transition);
+            white-space: nowrap;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .ctrl-btn:hover {
+            background: var(--clr-btn-hover);
+            transform: translateY(-2px);
+            outline: none;
+        }
+
+        /* Şarkı dropdown */
+        .dropdown {
+            position: relative;
+        }
+
+        #song-select {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .dropdown-icon {
+            transition: transform var(--transition);
+        }
+
+        .dropdown[aria-expanded="true"] .dropdown-icon {
+            transform: rotate(180deg);
+        }
+
+        #song-list {
+            position: absolute;
+            top: calc(100% + 0.3rem);
+            right: 0;
+            background: #ffff;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            list-style: none;
+            overflow: hidden;
+            z-index: 1000;
+            width: max-content;
+        }
+
+        #song-list.hidden {
+            display: none !important;
+        }
+
+        #song-list li {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-family: var(--ff-base);
+        }
+
+        #song-list li:hover {
+            background: var(--clr-secondary);
+        }
+
+        /* ========= Modal & Slider ========= */
+        #intro-modal {
+            position: fixed;
+            inset: 0;
+            background: var(--clr-overlay), rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 900;
+        }
+
+        .modal-content {
+            position: relative;
+            width: 90vw;
+            max-width: 500px;
+            aspect-ratio: 5 / 6;
+            background: #ffffff00;
+            border-radius: 1rem;
+            overflow: visible;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .static-photo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 20px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: -0.6rem;
+            right: -0.5rem;
+            width: 1.4rem;
+            height: 1.4rem;
+            background: #b84c5e;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.3rem;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: background 0.3s ease, transform 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            background: #b92a3a;
+            transform: scale(1.1);
+        }
+
+        .slider-controls {
+            position: absolute;
+            bottom: -2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            z-index: 10;
+        }
+
+        .slider-btn {
+            background: var(--clr-primary);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            cursor: pointer;
+            transition: background var(--transition), transform var(--transition);
+        }
+
+        .slider-btn:hover {
+            background: var(--clr-secondary);
+            transform: translateY(-2px);
+        }
+
+        /* ======== Kalp & Mesaj ========= */
+        .message-area {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            /* iç boşluk sıfır */
+            margin: 0;
+            /* dış boşluk sıfır */
+        }
+
+        .heart-wrapper {
+            position: relative;
+            width: clamp(120px, 30vw, 200px);
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .heart {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: var(--clr-primary);
+            transform: rotate(-45deg);
+            animation: beat 1.5s infinite ease-in-out;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+            border-radius: 0;
+            /* kenar yuvarlama ::before/::after ile şekil veriyoruz */
+        }
+
+        .heart::before,
+        .heart::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: var(--clr-primary);
+            border-radius: 50%;
+        }
+
+        .heart::before {
+            top: -50%;
+            left: 0;
+        }
+
+        .heart::after {
+            top: 0;
+            left: 50%;
+        }
+
+        /* Animasyonlar */
+        @keyframes beat {
+
+            0%,
+            100% {
+                transform: rotate(-45deg) scale(1);
+            }
+
+            50% {
+                transform: rotate(-45deg) scale(1.15);
+            }
+        }
+
+        @keyframes typing {
+            from {
+                width: 0
+            }
+
+            to {
+                width: 100%
+            }
+        }
+
+        .typing {
+            white-space: nowrap;
+            overflow: hidden;
+            border-right: 3px solid #fff;
+            width: 0;
+            animation: typing 3s steps(40, end) forwards;
+        }
+
+        .heart-text {
+            position: absolute;
+            top: -38px;
+            /* mutlak yerine flex içi */
+            z-index: 2;
+            /* kalpten önde olsun */
+            padding: 0.5em;
+            /* metin etrafında boşluk */
+            font-family: var(--ff-script);
+            font-size: 20px;
+            color: white;
+            text-align: center;
+            line-height: 1.4;
+            word-break: break-word;
+            white-space: normal;
+        }
+
+        /* --------------- color hearts --------------- */
+        .color-heart {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            /* 5 saniyede 0.5× → 10× büyü, forwards: sonunu koru */
+            animation: grow-forever 5s linear forwards;
+            transform-origin: center center;
+        }
+
+        @keyframes grow-forever {
+            from {
+                transform: scale(20);
+                opacity: 1;
+            }
+
+            to {
+                transform: scale(100);
+                opacity: 1;
+            }
+        }
+
+
+        .broken-heart {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.2rem;
+            background: var(--clr-btn-bg);
+            color: var(--clr-btn-text);
+            border: none;
+            padding: 0.4rem;
+            border-radius: 0.6rem;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background var(--transition), transform var(--transition);
+            white-space: nowrap;
+            outline: none;
+        }
+
+        /* Ortak emoji boyutunu burada belirleyin: */
+        .ctrl-btn .emoji {
+            font-size: 1.2rem;
+            /* basketbol butonda kullanılan değerle birebir */
+            line-height: 1;
+            display: inline-block;
+            vertical-align: middle;
+            transform: translateY(1px);
+            /* aynı küçük dikey kaydırma */
+        }
+
+        /* kırık kalp butonunun altına “tıkla” metni */
+        #broken-heart::after {
+            content: "";
+            display: block;
+            font-size: 1rem;
+            font-family: var(--ff-base);
+            color: white;
+            text-align: center;
+            margin-top: 0.2rem;
+            pointer-events: none;
+            /* tıklamayı butondan ayırmaz */
+        }
+
+        .broken-heart:hover {
+            background: var(--clr-btn-hover);
+            transform: translateY(-2px);
+        }
+
+        .floating-message {
+            position: fixed;
+            font-size: 1rem;
+            font-family: 'Pacifico', cursive;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            color: rgb(0, 0, 0);
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+            z-index: 999;
+            animation: floatSweet 3s ease forwards;
+            text-align: center;
+        }
+
+        @keyframes floatSweet {
+            0% {
+                opacity: 0;
+                transform: translateY(0) scale(0.8);
+            }
+
+            30% {
+                opacity: 1;
+                transform: translateY(-20px) scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-140px) scale(1.2);
+            }
+        }
+
+        /* ======== Responsive ======== */
+        @media (max-width: 480px) {
+            .modal-content {
+                width: 95vw;
+            }
+        }
+
+        .floating-eye {
+            position: fixed;
+            top: 0.5rem;
+            left: 1rem;
+            z-index: 1100;
+            background: var(--clr-btn-bg);
+            color: var(--clr-btn-text);
+            border: none;
+            padding: 0.4rem 0.6rem;
+            border-radius: 2rem;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: background var(--transition), transform var(--transition);
+        }
+
+        .floating-eye:hover {
+            background: var(--clr-btn-hover);
+            transform: scale(1.05);
+        }
+
+        button {
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button:focus {
+            outline: none;
+        }
+
+        .info-box {
+            display: none;
+            position: absolute;
+            top: 100%;
+            /* wrapper’ın altından başlar */
+            left: 50%;
+            /* wrapper’ın ortası */
+            transform: translateX(-50%);
+            margin-top: 0.5em;
+            /* butondan biraz boşluk */
+            padding: 1em;
+            background: #f9f9f9;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            max-width: 340px
+        }
+
+        /* Wrapper hem butonu hem kutuyu referans alacak */
+        .info-wrapper {
+            position: relative;
+            display: inline-block;
+            /* Buton genişliğine kadar yer kaplar */
+        }
+
+        /* görünebilir hale gelince */
+        .info-box.visible {
+            display: block;
+        }
+
+        #basketball {
+            display: none;
+        }
+
+        .basketball-btn {
+            background: linear-gradient(145deg, #ff9f1c, #d65a31);
+            border: none;
+            color: white;
+            font-size: 0.5rem;
+            font-weight: bold;
+            padding: 10px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            transition: all 0.25s ease;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .basketball-btn .emoji {
+            font-size: 1.2rem;
+            line-height: 1;
+            display: inline-block;
+            transform: translateY(1px);
+        }
+
+        .basketball-btn:hover {
+            background: linear-gradient(145deg, #d65a31, #ff9f1c);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Üst Kontroller -->
+    <header id="controls">
+        <button id="toggle-visibility" class="ctrl-btn floating-eye">
+            <span class="material-icons">visibility</span>
+        </button>
+        <button id="theme-toggle" class="ctrl-btn">
+            <span class="material-icons">invert_colors</span>
+        </button>
+
+        <button id="basketball" class="ctrl-btn basketball-btn" style="display: none;">
+            <span class="emoji">🏀</span>
+        </button>
+        <button id="broken-heart" aria-label="Kırık Kalp" class="broken-heart hidden">
+            💔
+        </button>
+        <div class="dropdown" aria-expanded="false">
+            <!-- data-auto-index ile hangi li elemanı otomatik seçilsin belirleniyor -->
+            <button id="song-select" class="ctrl-btn" data-auto-index="2" aria-haspopup="listbox">
+                <span class="material-icons">music_note</span>
+                <span id="song-select-label"></span>
+                <span class="material-icons dropdown-icon">expand_more</span>
+            </button>
+            <ul id="song-list" class="hidden" role="listbox" aria-label="Şarkı Listesi">
+                <li data-src="assets/audio/Hande-Mehan-feat-Cem-Adrian-Sen-Benim-Sarkilarimsin.mp3">Sen Benim
+                    Şarkılarımsın</li>
+                <li data-src="assets/audio/Can-Ozan-Acitir-gibi-severek.mp3">Acıtır Gibi Severek</li>
+                <li data-src="assets/audio/Vuqar-Huseynov-Aklimda-Sorular (1).mp3">Aklımda Sorular</li>
+            </ul>
+        </div>
+
+        <button id="infoo" class="ctrl-btn">
+            <span class="material-icons">info</span>
+        </button>
+        <div id="info-box" class="info-box">
+            <ul>
+                <li>Ne zaman geliştirmeye başladım: 20 şubat 2025</li><br><br>
+            </ul>
+        </div>
+        <button id="show-photo" class="ctrl-btn">
+            <span class="material-icons">photo_library</span>
+        </button>
+    </header>
+
+    <audio id="bg-music" loop preload="metadata">
+
+        <source src="assets/audio/" type="audio/mpeg" />
+        Tarayıcınız audio elementini desteklemiyor.
+
+    </audio>
+
+    <!-- Modal & Slider -->
+    <div id="intro-modal" class="hidden" role="dialog" aria-modal="true">
+        <div class="modal-content">
+            <button id="close-btn" class="close-btn" aria-label="Kapat">
+                <span class="material-icons">close</span>
+            </button>
+            <img src="assets/images/12mayis.jpg" alt="Fotoğraf" class="static-photo" loading="lazy" />
+            <div class="slider-controls">
+                <button id="prev-photo" class="slider-btn" aria-label="Önceki">←</button>
+                <button id="next-photo" class="slider-btn" aria-label="Sonraki">→</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kalp & Harf Harf Mesaj -->
+    <main class="message-area">
+        <div class="heart-wrapper">
+            <div class="heart"></div>
+            <div class="heart-text" id="message" aria-live="polite"></div>
+        </div>
+    </main>
+
+
+    <!-- Harici JS -->
+    <script src="js/script.js?v=1.0.3" defer>// JS içinde, sayfa yüklendiğinde:
+        const bgMusic = document.getElementById('bg-music');
+        bgMusic.play()
+            .then(() => {
+                // autoplay başladı (sessiz), hemen sonra sesi aç
+                bgMusic.muted = false;
+            })
+            .catch(() => {
+                // eğer bloklandıysa, ilk kullanıcı tıklamasında çal
+                const unlock = () => {
+                    bgMusic.play().catch(() => { });
+                    window.removeEventListener('click', unlock);
+                };
+                window.addEventListener('click', unlock, { once: true });
+            });
+
+    </script>
+
+</body>
+
+</html>

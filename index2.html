@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kalbin Sessizliği</title>
+    <!-- Tatlı, modern font -->
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            font-family: 'Baloo 2', cursive;
+            color: #fefefe;
+            /* Daha kapalı, pastel şık mor arka plan */
+            background: linear-gradient(135deg, #af6fc8 0%, #883fa7 60%, #560b65 100%);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        /* Yıldızlar daha parlak */
+        .star {
+            position: fixed;
+            width: 3px;
+            height: 3px;
+            background: white;
+            border-radius: 40%;
+            box-shadow: 0 0 30px 10px rgb(226, 226, 226);
+            opacity: 0;
+            animation: twinkle 2s ease-in-out forwards;
+            z-index: 0;
+        }
+
+        @keyframes twinkle {
+            0% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.8);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-top: 1rem;
+            z-index: 2;
+        }
+
+        .quote {
+            font-size: 1.1rem;
+            max-width: 90%;
+            margin: 0.4rem auto;
+            font-style: italic;
+            z-index: 2;
+            line-height: 1.2;
+        }
+
+        /* Kalp GIF için mükemmel merkezli, kaymasız mask */
+        .healed-heart {
+            margin: 0.5rem auto;
+            z-index: 2;
+            width: 240px;
+            height: 240px;
+            position: relative;
+        }
+
+        .healed-heart img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            /* Yüzde bazlı, tam kalp şekli */
+            clip-path: path('M 50% 15% C 30% 0% 0% 25% 50% 75% C 100% 25% 70% 0% 50% 15% Z');
+            animation: pulse 2s infinite ease-in-out;
+            display: block;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .return-btn {
+            padding: 1rem 1.5rem;
+            background: #ff4d6d;
+            color: white;
+            border: none;
+            border-radius: 2rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 4rem;
+            z-index: 2;
+        }
+
+        .return-btn:hover {
+            background: #e63956;
+            transform: scale(1.05);
+        }
+
+        .floating-word {
+            position: fixed;
+            font-size: 1rem;
+            font-family: 'Baloo 2', cursive;
+            color: #ffffffcc;
+            opacity: 0;
+            animation: floatUp 4s ease forwards;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 0;
+                transform: translateY(0) scale(0.8);
+            }
+
+            50% {
+                opacity: 1;
+                transform: translateY(-40px) scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-140px) scale(1.2);
+            }
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 3rem;
+            }
+
+            .quote {
+                font-size: 1.6rem;
+            }
+
+            .healed-heart {
+                width: 100px;
+                height: 100px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="quote">
+        “Zaman her yarayı iyileştirir,<br>
+        ama bazı duygular sadece beklemeyi bilir.”<br><br>
+        “Umut, bazen sessiz bir fısıltıdır.<br>
+        Dön diye bağırmaz... sadece kalır.”<br><br>
+        “Ve kalp, hâlâ oradaysa...<br>
+        kimseye söylemeden sevmeye devam eder.”
+    </div>
+
+    <!-- Kalp GIF -->
+    <div class=" healed-heart">
+        <img src="assets/images/jumpheart.gif" alt="Kalp GIF">
+    </div>
+
+    <!-- Geri Dön Butonu -->
+    <button id="go-back" class="return-btn">Başlangıca Dön</button>
+
+    <!-- Yıldızlar JS -->
+    <script>
+        setInterval(() => {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = `${Math.random() * 100}vw`;
+            star.style.top = `${Math.random() * 100}vh`;
+            document.body.appendChild(star);
+            setTimeout(() => star.remove(), 2500);
+        }, 200);
+
+        document.getElementById('go-back')?.addEventListener('click', () => {
+            window.location.href = 'index.html';
+        });
+
+        setInterval(() => {
+            const word = document.createElement('div');
+            word.className = 'floating-word';
+            word.style.left = `${Math.random() * 90}%`;
+            word.style.top = `${Math.random() * 50 + 10}%`;
+            document.body.appendChild(word);
+            setTimeout(() => word.remove(), 3000);
+        }, 3000);
+    </script>
+</body>
+
+</html>
