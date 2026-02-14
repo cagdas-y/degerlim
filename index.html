@@ -1648,6 +1648,48 @@
                 padding: 30px 20px;
             }
         }
+                /* --- MOBİL İÇİN ÖZEL AYARLAR --- */
+        @media (max-width: 768px) {
+
+            /* Kutunun kendisini ekrana sığdırır */
+            .welcome-content {
+                padding: 1.5rem !important;
+                /* İç boşluğu azaltır */
+                width: 85% !important;
+                /* Genişliği ayarlar */
+                max-height: 85vh;
+                /* Ekran yüksekliğinin %85'ini geçmesini engeller */
+                overflow-y: auto;
+                /* Eğer yazı çok uzunsa kaydırma (scroll) özelliği ekler */
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
+
+            /* Başlığı küçültür */
+            .welcome-content h1 {
+                font-size: 2.2rem !important;
+                /* Yazı boyutunu küçültür */
+                margin-bottom: 0.5rem !important;
+                line-height: 1.2;
+            }
+
+            /* Açıklama yazısını küçültür */
+            .welcome-content p {
+                font-size: 1rem !important;
+                line-height: 1.4;
+                margin-bottom: 1.5rem !important;
+            }
+
+            /* Butonu daha görünür ve tıklanabilir yapar */
+            .start-btn {
+                padding: 12px 30px !important;
+                font-size: 1rem !important;
+                width: auto;
+                margin-top: 10px;
+            }
+        }
     </style>
 </head>
 
